@@ -168,6 +168,18 @@ def summarize(trades, candles):
         reasons[t["reason"]] = reasons.get(t["reason"], 0) + 1
     print("Exits:", ", ".join(f"{k}={v}" for k, v in sorted(reasons.items())))
 
+    # Year-by-year breakdown: is the result stable or driven by one period?
+    print("-" * 44)
+    print("Per year (total R):   trades |  ALL  |  BUY  | SELL")
+    years = sorted({int(bot.fmt_time(t["time"])[:4]) for t in trades})
+    for y in years:
+        ys = [t for t in trades if int(bot.fmt_time(t["time"])[:4]) == y]
+        tot = sum(t["r"] for t in ys)
+        buy = sum(t["r"] for t in ys if t["side"] == "BUY")
+        sell = sum(t["r"] for t in ys if t["side"] == "SELL")
+        print(f"  {y}:              {len(ys):4d}   | {tot:+5.1f} | {buy:+5.1f} | {sell:+5.1f}")
+    print("-" * 44)
+
     # Max drawdown in R and equity if risking 1% per trade
     cum, peak, max_dd, equity = 0.0, 0.0, 0.0, 1.0
     for t in trades:

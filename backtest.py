@@ -25,13 +25,13 @@ CANDLE_MS = 4 * 3600 * 1000
 
 
 # ---------------- History download ----------------
-def history_bybit(start_ms):
+def history_bybit(start_ms, base="BTC"):
     out = {}
     end = int(time.time() * 1000)
     while end > start_ms:
         url = (
             "https://api.bybit.com/v5/market/kline"
-            f"?category=spot&symbol=BTCUSDT&interval=240&limit=1000&end={end}"
+            f"?category=spot&symbol={base}USDT&interval=240&limit=1000&end={end}"
         )
         rows = bot.http_get_json(url)["result"]["list"]  # newest first
         if not rows:
@@ -45,14 +45,14 @@ def history_bybit(start_ms):
     return sorted(out.values())
 
 
-def history_kucoin(start_ms):
+def history_kucoin(start_ms, base="BTC"):
     out = {}
     end_s = int(time.time())
     start_s = start_ms // 1000
     while end_s > start_s:
         url = (
             "https://api.kucoin.com/api/v1/market/candles"
-            f"?type=4hour&symbol=BTC-USDT&startAt={start_s}&endAt={end_s}"
+            f"?type=4hour&symbol={base}-USDT&startAt={start_s}&endAt={end_s}"
         )
         rows = bot.http_get_json(url)["data"]  # newest first
         if not rows:
@@ -67,12 +67,12 @@ def history_kucoin(start_ms):
     return sorted(out.values())
 
 
-def load_history(years):
+def load_history(years, base="BTC"):
     start_ms = int((time.time() - years * 365 * 24 * 3600) * 1000)
     last_error = None
     for name, fn in (("bybit", history_bybit), ("kucoin", history_kucoin)):
         try:
-            candles = fn(start_ms)
+            candles = fn(start_ms, base)
             if len(candles) < WARMUP + 100:
                 raise ValueError(f"only {len(candles)} candles returned")
             print(f"History source: {name} ({len(candles)} candles)")

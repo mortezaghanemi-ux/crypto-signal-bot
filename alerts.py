@@ -91,7 +91,12 @@ def send(cfg, text):
 
 # ---------------- Market data ----------------
 def _kucoin(coin):
-    url = f"https://api.kucoin.com/api/v1/market/candles?type=4hour&symbol={coin}-USDT"
+    end_s = int(time.time())
+    start_s = end_s - 400 * 4 * 3600  # explicit range, same form the backtest used
+    url = (
+        "https://api.kucoin.com/api/v1/market/candles"
+        f"?type=4hour&symbol={coin}-USDT&startAt={start_s}&endAt={end_s}"
+    )
     rows = bot.http_get_json(url)["data"]  # newest first: [t_s, open, close, high, low]
     return [
         (int(r[0]) * 1000, float(r[1]), float(r[3]), float(r[4]), float(r[2]))
@@ -134,7 +139,7 @@ SOURCES = [("kucoin", _kucoin), ("okx", _okx), ("bybit", _bybit), ("binance", _b
 def fetch_closed(coin):
     """Closed 4h candles only (a candle is closed once start + 4h <= now)."""
     now_ms = int(time.time() * 1000)
-    last_error = None
+    errors = []
     for name, fn in SOURCES:
         try:
             candles = [c for c in fn(coin) if c[0] + CANDLE_MS <= now_ms]
@@ -142,8 +147,8 @@ def fetch_closed(coin):
                 raise ValueError(f"only {len(candles)} closed candles")
             return candles
         except Exception as e:  # noqa: BLE001
-            last_error = f"{name}: {e}"
-    raise RuntimeError(f"{coin}: all sources failed ({last_error})")
+            errors.append(f"{name}: {e or type(e).__name__}")
+    raise RuntimeError(f"{coin}: all sources failed | " + " | ".join(errors))
 
 
 # ---------------- Strategy (pure function, easy to test) ----------------

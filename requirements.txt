@@ -1,2 +1,1 @@
-ccxt
-pandas
+# No third-party packages needed for step 1 (standard library only).

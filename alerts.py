@@ -19,7 +19,8 @@ Commands:
     python alerts.py report     show paper-trading results
 
 Secrets live in a file named .env next to this script (never commit it):
-    TELEGRAM_TOKEN=123456:ABC...
+    BOT_SERVICE=telegram            (or: bale - works without a VPN inside Iran)
+    TELEGRAM_TOKEN=123456:ABC...    (the bot token; same name is used for Bale)
     TELEGRAM_CHAT_ID=123456789
 """
 
@@ -59,14 +60,18 @@ def load_env():
                     continue
                 k, v = line.split("=", 1)
                 cfg[k.strip()] = v.strip().strip('"').strip("'")
-    for k in ("TELEGRAM_TOKEN", "TELEGRAM_CHAT_ID"):
+    for k in ("TELEGRAM_TOKEN", "TELEGRAM_CHAT_ID", "BOT_SERVICE"):
         if os.environ.get(k):
             cfg[k] = os.environ[k]
     return cfg
 
 
-def tg_call(token, method, payload=None):
-    url = f"https://api.telegram.org/bot{token}/{method}"
+API_BASES = {"telegram": "https://api.telegram.org", "bale": "https://tapi.bale.ai"}
+
+
+def tg_call(token, method, payload=None, service="telegram"):
+    base = API_BASES.get(service, API_BASES["telegram"])
+    url = f"{base}/bot{token}/{method}"
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(
         url, data=data, headers={"Content-Type": "application/json"}
@@ -82,7 +87,12 @@ def send(cfg, text):
     if not token or not chat_id:
         return False
     try:
-        res = tg_call(token, "sendMessage", {"chat_id": chat_id, "text": text})
+        res = tg_call(
+            token,
+            "sendMessage",
+            {"chat_id": chat_id, "text": text},
+            service=cfg.get("BOT_SERVICE", "telegram").lower(),
+        )
         return bool(res.get("ok"))
     except Exception as e:  # noqa: BLE001
         print("Telegram send failed:", str(e).replace(token, "***"))
@@ -354,7 +364,7 @@ def cmd_chatid():
         print("Put TELEGRAM_TOKEN in .env first.")
         return
     try:
-        res = tg_call(token, "getUpdates")
+        res = tg_call(token, "getUpdates", service=cfg.get("BOT_SERVICE", "telegram").lower())
     except Exception as e:  # noqa: BLE001
         print("Failed:", str(e).replace(token, "***"))
         return

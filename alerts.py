@@ -34,7 +34,12 @@ from datetime import datetime, timezone
 
 import bot
 
-COINS = ["BTC", "ETH", "SOL", "BNB", "XRP"]
+# First 5 = original set. Added after out-of-sample backtests (4h 55/20 long-only
+# profit factor >= 1.4 over ~5 years). LTC, DOT (negative) and DOGE (PF 1.2) were left out.
+COINS = [
+    "BTC", "ETH", "SOL", "BNB", "XRP",
+    "ADA", "AVAX", "TRX", "LINK", "BCH", "UNI", "XLM",
+]
 N_IN = 55
 N_OUT = 20
 STOP_ATR = 2.0

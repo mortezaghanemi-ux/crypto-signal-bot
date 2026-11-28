@@ -84,7 +84,8 @@ def run_donchian(candles, n_in, n_out, direction, entry_ok=None):
         fee_r = 2 * FEE * pos["entry"] / risk
         trades.append(
             {"time": pos["time"], "side": "BUY" if direction == 1 else "SELL",
-             "r": gross - fee_r, "reason": reason, "bars": k - pos["k"]}
+             "r": gross - fee_r, "reason": reason, "bars": k - pos["k"],
+             "risk_pct": risk / pos["entry"]}
         )
         pos = None
 

@@ -56,8 +56,13 @@ def to_daily(candles):
     return out
 
 
-def run_donchian(candles, n_in, n_out, direction):
-    """direction: +1 long-only sleeve, -1 short-only sleeve. Returns trade list."""
+def run_donchian(candles, n_in, n_out, direction, entry_ok=None):
+    """direction: +1 long-only sleeve, -1 short-only sleeve. Returns trade list.
+
+    entry_ok: optional filter. Called as entry_ok(p) with p = index of the last
+    closed candle when a breakout is detected; return False to skip the entry.
+    With entry_ok=None the behaviour is exactly the original.
+    """
     n = len(candles)
     opens = [c[1] for c in candles]
     highs = [c[2] for c in candles]
@@ -119,6 +124,8 @@ def run_donchian(candles, n_in, n_out, direction):
         elif direction == -1 and closes[p] < min(lows[p - n_in:p]):
             pass
         else:
+            continue
+        if entry_ok is not None and not entry_ok(p):
             continue
         entry = opens[k]
         pos = {
